@@ -113,46 +113,236 @@ After uploading a document, users can ask questions and receive answers generate
 
 ## How it works
 
-1. A User uploads a '.txt' 
+1. A user uploads a '.txt' document through the Streamlit frontend.
+2. The frontend sends the file to the FastAPI backend.
+3. The backend stores the full document in SQLite.
+4. The document is split into smaller chunks using a recursive text splitter.
+5. Each chunk is converted into an embedding using SentenceTransformers.
+6. Chunk text and embeddings are stored in SQLite.
+7. When the user asks a question, the question is also embedded.
+8. The system compares the question embedding against stored chunk embeddings using cosine similarity.
+9. The most relevant chunks are inserted into a RAG prompt.
+10. Ollama generates an answer using the retrieved context.
+11. The frontend displays the answer and the retrieved chunks.
 
 ---
 
 ## Local Setup
 
-*Work in Progess...*
+These instructions are written for Windows PowerShell.
+
+### 1. Clone the repository
+
+```powershell
+git clone https://github.com/EvanSmith1016/rag-chatbot.git
+cd rag-chatbot
+```
+
+### 2. Create and activate a virtual environment
+
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+```
+
+### 3. Install backend dependencies
+
+```powershell
+pip install -r backend\requirements.txt
+```
+
+### 4. Install frontend dependencies
+
+```powershell
+pip install -r frontend\requirements.txt
+```
+
+### 5. Install and prepare Ollama
+
+Install Ollama from:
+
+```text
+https://ollama.com/download
+```
+
+Then pull the local model:
+
+```powershell
+ollama pull llama3
+```
+
+Confirm the model is available:
+
+```powershell
+ollama list
+```
 
 ---
 
-## Running the app locally
+## Running the App Locally
 
-*Work in progress...*
+You need two terminals: one for the backend and one for the frontend.
+
+### Terminal 1: Start the FastAPI backend
+
+From the project root:
+
+```powershell
+cd backend
+uvicorn app.main:app --reload
+```
+
+The backend should run at:
+
+```text
+http://127.0.0.1:8000
+```
+
+You can check the health endpoint:
+
+```text
+http://127.0.0.1:8000/health
+```
+
+You can also view the Swagger UI API docs:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Terminal 2: Start the Streamlit frontend
+
+From the project root:
+
+```powershell
+cd frontend
+streamlit run app.py
+```
+
+The frontend should open at:
+
+```text
+http://localhost:8501
+```
 
 ---
 
 ## Usage
 
-*Work in progress...*
+1. Start the backend with FastAPI.
+2. Start the frontend with Streamlit.
+3. Upload a `.txt` document through the frontend.
+4. Ask a question about the uploaded document.
+5. View the generated answer and retrieved chunks.
+
+Example document:
+
+```text
+FastAPI is a modern Python framework used for building APIs.
+It supports dependency injection and automatic OpenAPI docs.
+SQLite is a lightweight file-based database.
+```
+
+Example questions:
+
+```text
+What is FastAPI used for?
+```
+
+```text
+What database is mentioned?
+```
 
 ---
 
 ## API Endpoints
 
-*Work in progress...*
+### Health Check
+
+```http
+GET /health
+```
+
+Returns:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+### Upload Document
+
+```http
+POST /documents/upload
+```
+
+Accepts a `.txt` file and returns:
+
+```json
+{
+  "document_id": 1,
+  "num_chunks": 3
+}
+```
+
+### Chat
+
+```http
+POST /chat/
+```
+
+Request body:
+
+```json
+{
+  "document_id": 1,
+  "question": "What is this document about?"
+}
+```
+
+Response body:
+
+```json
+{
+  "answer": "The document discusses...",
+  "retrieved_chunks": [
+    "Relevant chunk text..."
+  ]
+}
+```
 
 ---
 
 ## Current Limitations
 
-*Work in Progress...*
+- Only supports `.txt` files
+- Does not currently support PDF or DOCX parsing
+- Uses SQLite instead of a dedicated vector database
+- Stores embeddings as serialized text for MVP simplicity
+- Retrieval uses basic cosine similarity
+- No user authentication
+- No persistent chat history
+- No multi-document search yet
+- Prompt guardrails are still basic and still need to be refined
 
 ---
 
 ## Future Improvements
 
-*Work in progress...*
+- Add PDF and DOCX document parsing
+- Add Docker and Docker Compose support
+- Add persistent chat history and sessions
+- Improve prompt guardrails to reduce hallucinations
+- Add source citations in the UI
+- Add multi-document search
+- Add FAISS or another vector index for faster retrieval (pretty slow right now)
+- Add unit and integration tests with Pytest
+- Add CI/CD with GitHub Actions
+- Improve frontend layout and add chat history display
 
 ---
 
 ## License
 
-This is an open source project and can be used however you want.
+This is an open source project that was meant for portfolio and learning purposes.
